@@ -93,7 +93,7 @@ class EKFModel:
 
     def __motion_update(self, command, U):
         previousMeanState = self.mu
-        _, meanStateChange = self.motionModel.move(previousMeanState, command=command)
+        _, meanStateChange = self.motionModel.noisy_move(previousMeanState, command=command)
         self.mu += meanStateChange
         self.Sigma += dot(dot(self.S, U), self.S.T)
 
@@ -144,7 +144,7 @@ class EIFModel:
 
     def __motion_update(self, command, U):
         previousMeanState = self.estimate()
-        _, meanStateChange = self.motionModel.move(previousMeanState, command=command)
+        _, meanStateChange = self.motionModel.noisy_move(previousMeanState, command=command)
         self.H = inv(inv(self.H) + dot(dot(self.S, U), self.S.T))
         self.b = dot((previousMeanState + meanStateChange).T,  self.H)
 
