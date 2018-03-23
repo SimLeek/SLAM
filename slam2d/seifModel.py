@@ -10,7 +10,14 @@ from util.dots import dots
 
 class SEIFModel:
 
-    def __init__(self, dimension, robotFeaturesDim, envFeaturesDim, motionModel, mesModel, covMes, muInitial, maxLinks):
+    def __init__(self, dimension,
+                 robotFeaturesDim,
+                 envFeaturesDim,
+                 motionModel,
+                 mesModel,
+                 covMes,
+                 muInitial,
+                 maxLinks):
         self.robotFeaturesDim = robotFeaturesDim
         self.envFeaturesDim = envFeaturesDim
         self.dimension = dimension
@@ -27,15 +34,15 @@ class SEIFModel:
         self.maxLinks = maxLinks
 
     def update(self, measures, landmarkIds, command, U):
-        self.__motion_update_sparse(command, U)
-        self.__mean_update()
+        self._motion_update_sparse(command, U)
+        self._mean_update()
         for ldmIndex, ldmMes in zip(landmarkIds, measures):
-            self.__measurement_update(ldmMes, int(ldmIndex))
-        self.__mean_update()
-        self.__sparsification()
+            self._measurement_update(ldmMes, int(ldmIndex))
+        self._mean_update()
+        self._sparsification()
         return self.H, self.b, self.mu
 
-    def __motion_update(self, command, U):
+    def _motion_update(self, command, U):
         r = self.robotFeaturesDim
         previousMeanState = self.estimate()
         meanStateChange = self.motionModel.exact_move(previousMeanState, command)
@@ -56,7 +63,7 @@ class SEIFModel:
         self.b = dot(newMeanState.T, self.H)
         self.mu = newMeanState
 
-    def __motion_update_sparse(self, command, U):
+    def _motion_update_sparse(self, command, U):
         r = self.robotFeaturesDim
         previousMeanState = self.estimate()
         meanStateChange = self.motionModel.exact_move(previousMeanState, command)
@@ -84,18 +91,18 @@ class SEIFModel:
         self.b = H.dot(newMeanState).T
         self.mu = newMeanState
 
-    def __mean_update(self):
+    def _mean_update(self):
         ''' Coordinate ascent '''
         mu = self.mu
         iterations = 30
-        y0, yp = self.__partition_links()
+        y0, yp = self._partition_links()
         y = np.concatenate([np.arange(self.robotFeaturesDim), y0, yp])
 
         # vMu = dot(self.b, inv(self.H)).T
         # muSave = []
         # muSave2 = []
 
-        for t in xrange(iterations):
+        for t in range(iterations):
             for i in y:
                 y2 = np.setdiff1d(y, i)
                 mu[i] = (self.b[0, i] - dot(self.H[i, y2], mu[y2])) / self.H[i, i]
@@ -103,9 +110,9 @@ class SEIFModel:
         self.mu = mu
         # plt.plot(muSave)
 
-    def __measurement_update(self, ldmMes, ldmIndex):
+    def _measurement_update(self, ldmMes, ldmIndex):
         mu = self.mu
-        meanMes, gradMeanMes = self.__get_mean_measurement_params(mu, ldmIndex)
+        meanMes, gradMeanMes = self._get_mean_measurement_params(mu, ldmIndex)
 
         z = np.array(ldmMes).reshape(len(ldmMes), 1)
         zM = np.array(meanMes).reshape(len(ldmMes), 1)
@@ -118,14 +125,14 @@ class SEIFModel:
         self.H += dot(dot(C, self.invZ), C.T)
         self.b += dot(dot(correction.T, self.invZ), C.T)
 
-    def __partition_links(self):
+    def _partition_links(self):
         r = self.robotFeaturesDim
         e = self.envFeaturesDim
         d = self.dimension
         l = (d - r) / e
         arrRF = np.arange(r)
 
-        norms = np.array([np.linalg.norm(self.H[arrRF][:, np.arange(i * e + r, (i + 1) * e + r)]) for i in xrange(l)])
+        norms = np.array([np.linalg.norm(self.H[arrRF][:, np.arange(i * e + r, (i + 1) * e + r)]) for i in range(int(l))])
         ids = np.argsort(norms)
         yp = ids[-self.maxLinks:]
         y0 = np.setdiff1d(np.where(norms > 0), yp)
@@ -136,7 +143,7 @@ class SEIFModel:
 
         return y0, yp
 
-    def __build_projection_matrix(self, indices):
+    def _build_projection_matrix(self, indices):
         d1 = self.H.shape[0]
         d2 = len(indices)
 
@@ -144,14 +151,14 @@ class SEIFModel:
         S[indices] = np.eye(d2)
         return S
 
-    def __sparsification(self):
+    def _sparsification(self):
         x = np.arange(self.robotFeaturesDim)
-        y0, yp = self.__partition_links()
-        Sx = sparse.coo_matrix(self.__build_projection_matrix(x))
-        Sy0 = sparse.coo_matrix(self.__build_projection_matrix(y0))
-        Sxy0 = sparse.coo_matrix(self.__build_projection_matrix(np.concatenate((x, y0))))
-        Sxyp = sparse.coo_matrix(self.__build_projection_matrix(np.concatenate((x, yp))))
-        Sxy0yp = sparse.coo_matrix(self.__build_projection_matrix(np.concatenate((x, y0, yp))))
+        y0, yp = self._partition_links()
+        Sx = sparse.coo_matrix(self._build_projection_matrix(x))
+        Sy0 = sparse.coo_matrix(self._build_projection_matrix(y0))
+        Sxy0 = sparse.coo_matrix(self._build_projection_matrix(np.concatenate((x, y0))))
+        Sxyp = sparse.coo_matrix(self._build_projection_matrix(np.concatenate((x, yp))))
+        Sxy0yp = sparse.coo_matrix(self._build_projection_matrix(np.concatenate((x, y0, yp))))
         H = sparse.bsr_matrix(self.H)
 
         Hp = Sxy0yp.dot(Sxy0yp.T).dot(H).dot(Sxy0yp).dot(Sxy0yp.T)
@@ -167,7 +174,7 @@ class SEIFModel:
         self.H = Htt
         self.b = bt
 
-    def __get_mean_measurement_params(self, mu, ldmIndex):
+    def _get_mean_measurement_params(self, mu, ldmIndex):
         realIndex = self.robotFeaturesDim + ldmIndex * self.envFeaturesDim
         ldmMeanState = mu[realIndex: realIndex + self.envFeaturesDim]
         rMeanState = mu[:self.robotFeaturesDim]
