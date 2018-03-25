@@ -66,7 +66,7 @@ class SEIFModel:
     def _motion_update_sparse(self, command, U):
         r = self.robotFeaturesDim
         previousMeanState = self.estimate()
-        meanStateChange = self.motionModel.exact_move(previousMeanState, command)
+        meanStateChange, _ = self.motionModel.exact_move(previousMeanState, command)
         newMeanState = clipState(previousMeanState + meanStateChange)
 
         # TO IMPROVE
@@ -80,7 +80,11 @@ class SEIFModel:
         sparseGradMeanMotion = sparse.bsr_matrix(gradMeanMotion)
 
         delta = Sx.T.dot(sparseGradMeanMotion).dot(Sx)
-        G = Sx.dot(linalg.inv(sparse.eye(r) + delta) - sparse.eye(r)).dot(Sx.T)
+        try:
+            G = Sx.dot(linalg.inv(sparse.eye(r) + delta) - sparse.eye(r)).dot(Sx.T)
+        except RuntimeError: # happens on singular matrix. We can't be _too_ perfect.
+            G = Sx.dot(Sx.T)
+
         phi = sparse.eye(self.dimension) + G
         Hp = phi.T.dot(sH).dot(phi)
         deltaH = Hp.dot(Sx).dot(linalg.inv(invU + Sx.T.dot(Hp).dot(Sx))).dot(Sx.T).dot(Hp)

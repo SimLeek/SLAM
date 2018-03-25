@@ -11,9 +11,8 @@ class BasicMovement:
 
     #  Input the real state
     def noisy_move(self, state, covariance=None, command=None):
-        command = self.__choose_command(state) if command is None else command
         noise = self._get_noise(covariance)
-        idealMove = self.exact_move(state, command)
+        idealMove, command = self.exact_move(state, command)
         realMove = self._noisy_move(state, idealMove, noise)
         newState = state + realMove
         return clipState(newState), command
@@ -27,7 +26,8 @@ class BasicMovement:
             rotation = (np.random.rand() * 2 - 1) * self.maxRotation
         return [speed, rotation]
 
-    def exact_move(self, state, command):
+    def exact_move(self, state, command=None):
+        command = self.__choose_command(state) if command is None else command
         # state: x,y,rot
         # command: velocity, rotation
         speed, rotation = command
@@ -37,7 +37,7 @@ class BasicMovement:
 
         move = np.zeros_like(state)
         move[:3, 0] = [deltaX, deltaY, rotation]
-        return move
+        return move, command
 
     def _noisy_move(self, state, idealMove, noise):
         noisyMove = idealMove[:3] + noise

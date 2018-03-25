@@ -2,6 +2,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 import math
+from util.measureFunctions import measureFunction, gradMeasureFunction
+from util.basicMeasurement import BasicMeasurement
+from util.basicMovement import BasicMovement
+from slam2d.seifModel import SEIFModel
+
+import util.measureFunctions as meas
 
 if __name__ == '__main__':
 
@@ -25,6 +31,7 @@ if __name__ == '__main__':
         commandsDim = 2
         mesDim = 2
         dimension = robotFeaturesDim + nbLandmark * envFeaturesDim
+        meas.dimension = dimension
 
         # Covariances for motions and measurements
         covarianceMotion = np.eye(robotFeaturesDim)
@@ -78,10 +85,10 @@ if __name__ == '__main__':
             state, motionCommand = motionModel.noisy_move(state)
             measures, landmarkIds = measurementModel.measure(state)
 
-            mu += motionModel.exact_move(mu, motionCommand)
+            mu += motionModel.noisy_move(mu, motionCommand)[0]
 
             H, _, _ = seif.update(measures, landmarkIds, motionCommand, covarianceMotion)
-            print (H != 0).sum(), ' / ', H.size
+            print(H, ' / ', H.size)
 
             muSEIF = seif.estimate()
 
@@ -102,11 +109,11 @@ if __name__ == '__main__':
                           alpha=0.3))
         plt.scatter(landmarks[:, 0], landmarks[:, 1])
 
-        plt.plot(states[:, 0], states[:, 1])
-        plt.plot(mus_simple[:, 0], mus_simple[:, 1])
-        plt.plot(mus_seif[:, 0], mus_seif[:, 1])
+        plt.plot(states[:, 0], states[:, 1], color='m')
+        plt.plot(mus_simple[:, 0], mus_simple[:, 1], color='y')
+        plt.plot(mus_seif[:, 0], mus_seif[:, 1], color='k')
 
-        plt.legend(['Real position', 'Simple estimate', 'EKF estimate', 'EIF estimate', 'SEIF estimate'])
+        plt.legend(['Real position', 'Simple estimate', 'SEIF estimate'])
         plt.title("{0} landmarks".format(nbLandmark))
         plt.show()
 
