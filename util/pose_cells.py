@@ -4,6 +4,9 @@ import warnings
 if False:
     from types import List
 
+# todo: add robot rotational and directional velocity (both 1-dependent)
+# todo: add robot rotational and directional intended motion (both 1 dependent)
+
 class PoseCortex(object):
     def __init__(self):
         self.x_max = 2**32 - 1
@@ -12,8 +15,8 @@ class PoseCortex(object):
         self.y_min = -2**32 + 1
         self.int_theta_max = 2**8 - 1
         self.int_theta_min = -2**8 + 1
-        self.sqrt2_scale_max = 62
-        self.theta_scale_max = 7
+        self.sqrt2_scale_max = 62 # todo: auto-calculate this based on min/max
+        self.theta_scale_max = 7 # todo: auto-calculate this based on min/max
         self.x_buckets = 4
         self.y_buckets = 4
         self.theta_buckets = 4
@@ -23,6 +26,12 @@ class PoseCortex(object):
         theta_mod = theta % (m.pi*2)
         int_theta = (theta_mod*theta_range)/(m.pi*2) + self.int_theta_min
         return int_theta
+
+    # todo: replace this redundant code with get_n_dependent_x_ary_digit(x,scale,n)
+    # todo: and get_n_dependent_x_ary(x,n)
+    # todo: and add function parameter for transformations
+    # todo: and default to hex transformation for 2D, checkerboard for ND
+    # todo: default 3D max volume tessellation for 3D
 
     def _scaled_x_index(self, x, scale):
         x_range = self.x_max - self.x_min
