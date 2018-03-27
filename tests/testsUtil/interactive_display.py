@@ -3,7 +3,7 @@ from cv_pubsubs import window_sub
 
 def display(cam_num=0,
             request_size = (640, 480),
-            fps_limit = 60,
+            fps_limit = 6000,
             window_title = 'display',
             callbacks=[]):
 

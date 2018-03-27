@@ -17,3 +17,4 @@ class TestMeasureFunctions(ut.TestCase):
         self.assertListEqual(grad[:2, 1].tolist(), (np.array([5-2, 1-3]) / (np.linalg.norm([5-2, 1-3])**2)).tolist())
         self.assertListEqual(grad[6:6+2, 1].tolist(),
                              (np.array([2-5, 3-1]) / (np.linalg.norm([2-5, 3-1]) ** 2)).tolist())
+
