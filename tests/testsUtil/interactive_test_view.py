@@ -23,11 +23,39 @@ class TestViews(ut.TestCase):
         t.join()
 
     def test_matches(self):
-        vc = ViewCortex(256)
+        vc = ViewMatcher(256)
 
         kpr = KeyPointSystem(display=True, features_per_frame=2 ** 10 - 1, match_class=vc)
         t = display(cam_num=my_dir+os.sep+'giphy.mp4',
                     window_title='Match Test',
                     callbacks=[kpr.key_point_callback])
 
+        t.join()
+
+    def test_cortex(self):
+        vm = ViewMatcher(256)
+
+        vc = ViewCells(480, vm)
+
+        kpr = KeyPointSystem(display=True,
+                             features_per_frame=2 ** 10 - 1,
+                             match_class=vc)
+        t = display(cam_num=my_dir + os.sep + 'giphy.mp4',
+                    window_title='Cortex Test',
+                    callbacks=[kpr.key_point_callback])
+        t.join()
+
+    def test_correlation_cortex(self):
+        vm = ViewMatcher(512)
+
+        vc = ViewCells(1280, vm)
+
+        vcc = ViewCorrelationCells(vc)
+
+        kpr = KeyPointSystem(display=True,
+                             features_per_frame=2 ** 10 - 1,
+                             match_class=vcc)
+        t = display(cam_num=0,
+                    window_title='Cortex Test',
+                    callbacks=[kpr.key_point_callback])
         t.join()

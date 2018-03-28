@@ -37,8 +37,13 @@ class KeyPointSystem(object):
         kp = self.orb.detect(edge, None)
         kp, des = self.orb.compute(edge, kp)
 
+
+
         if self.match_class is not None:
             self.match_class.callback(kp, des)
+
+        if des is None:
+            return [edge]
 
         if des.size > self.max_desc:
             self.max_desc = des.size
@@ -54,11 +59,6 @@ class KeyPointSystem(object):
                 cv2.arrowedLine(edge, pt1, pt2, (int((1-k.response)*255),
                                                  int((k.response)*255),
                                                  0))
-            if self.match_class is not None:
-                for match in range(len(self.match_class.matches)):
-                    if len(self.match_class.matches[match]) != 2:
-                        continue
-                print(len(self.match_class.matches))
             return [edge]
 
 
